@@ -11,7 +11,7 @@ namespace Samples
     /// <summary>
     /// Examples from the README
     /// </summary>
-    public static class Scenario1
+    public static class Scenario2
     {
         [Description("Quick Start")]
         public static void QuickStart()
@@ -24,45 +24,49 @@ namespace Samples
             var awaitingMission = stateMachine.CreateInitialState("Awaiting Mission");
 
             // Add the rest of the possible states we have
-            var flyingToSearchArea = stateMachine.CreateState("Flying to Search Area");
-            var searchingForMobileLaunchers = stateMachine.CreateState("Searcing for Mobile Launchers");
-            var scanning = stateMachine.CreateState("Scanning");
-            var identifyingMobileLauncher = stateMachine.CreateState("Identifying Mobile Launcer");
-            var fixingMobileLauncher = stateMachine.CreateState("Fixing Mobile Launcher");
+            var flyingToNAI = stateMachine.CreateState("Flying to NAI");
+            var searchingForHVT = stateMachine.CreateState("Searcing for HVT");
+            var scanning = stateMachine.CreateState("Scanning Area");
+            var identifyingHVT = stateMachine.CreateState("Identifying HVT");
+            var fixingHVT = stateMachine.CreateState("Fixing HVT");
             var returningToBase = stateMachine.CreateState("Returning To Base");
+            var trackingHVT = stateMachine.CreateState("Tracking HVT");
+            var flyingEscort= stateMachine.CreateState("Flying Air and Air Escort");
+
 
             //Now we will add our transitions from states which will represent our events
             var missionStarted = new Event("Mission Started");
-            var arrivedToSearchArea = new Event("Arrived to Search Area");
-            var startingMobileLauncherSearch = new Event("Starting Mobile Launcher Search");
-            var mobileLauncherDetected = new Event("Mobile Launcher Detected");
-            var mobileLauncherNotIdentified = new Event("Mobile Launcher Not Identified");
-            var mobileLauncherIdentified = new Event("Mobile Launcher Identified");
+            var arrivedToNAI = new Event("Arrived to NAI");
+            var startingHVTSearch = new Event("Starting HVT Search");
+            var HVTDetected = new Event("HVT Detected");
+            var HVTNotIdentified = new Event("HVT Not Identified");
+            var HVTIdentified = new Event("HVT Identified");
             var positionFixed = new Event("Position Fixed");
             var lowFuelDetected = new Event("Low Fuel Detected");
             var missionCompleted = new Event("Mission Completed");
 
             //Transitions from state to state based on legal events
-            awaitingMission.TransitionOn(missionStarted).To(flyingToSearchArea);
-            flyingToSearchArea.TransitionOn(arrivedToSearchArea).To(searchingForMobileLaunchers);
-            searchingForMobileLaunchers.TransitionOn(startingMobileLauncherSearch).To(scanning);
-            scanning.TransitionOn(mobileLauncherDetected).To(identifyingMobileLauncher);
-            identifyingMobileLauncher.TransitionOn(mobileLauncherNotIdentified).To(scanning);
-            identifyingMobileLauncher.TransitionOn(mobileLauncherIdentified).To(fixingMobileLauncher);
-            fixingMobileLauncher.TransitionOn(positionFixed).To(scanning);
+            awaitingMission.TransitionOn(missionStarted).To(flyingToNAI);
+            flyingToNAI.TransitionOn(arrivedToNAI).To(searchingForHVT);
+            searchingForHVT.TransitionOn(startingHVTSearch).To(scanning);
+            scanning.TransitionOn(HVTDetected).To(identifyingHVT);
+            identifyingHVT.TransitionOn(HVTNotIdentified).To(scanning);
+            identifyingHVT.TransitionOn(HVTIdentified).To(fixingHVT);
+            fixingHVT.TransitionOn(positionFixed).To(trackingHVT);
+            fixingHVT.TransitionOn(positionFixed).To(flyingEscort);
 
             // Return to Base on all states where Low Fuel is detected
-            flyingToSearchArea.TransitionOn(lowFuelDetected).To(returningToBase);
-            searchingForMobileLaunchers.TransitionOn(lowFuelDetected).To(returningToBase);
+            flyingToNAI.TransitionOn(lowFuelDetected).To(returningToBase);
+            searchingForHVT.TransitionOn(lowFuelDetected).To(returningToBase);
             scanning.TransitionOn(lowFuelDetected).To(returningToBase);
-            identifyingMobileLauncher.TransitionOn(lowFuelDetected).To(returningToBase);
-            fixingMobileLauncher.TransitionOn(lowFuelDetected).To(returningToBase);
-            awaitingMission.TransitionOn(lowFuelDetected).To(returningToBase);
+            identifyingHVT.TransitionOn(lowFuelDetected).To(returningToBase);
+            fixingHVT.TransitionOn(lowFuelDetected).To(returningToBase);
+            trackingHVT.TransitionOn(lowFuelDetected).To(returningToBase);
+            flyingEscort.TransitionOn(lowFuelDetected).To(returningToBase);
 
             //Return to Base when mission is completed under the Searchingf for Mobile Launcher Hierarchy
-            scanning.TransitionOn(missionCompleted).To(returningToBase);
-            identifyingMobileLauncher.TransitionOn(missionCompleted).To(returningToBase);
-            fixingMobileLauncher.TransitionOn(missionCompleted).To(returningToBase);
+            trackingHVT.TransitionOn(missionCompleted).To(returningToBase);
+            flyingEscort.TransitionOn(missionCompleted).To(returningToBase);
 
             //Signify where our machine is starting (initial state)
             Assert.AreEqual(awaitingMission, stateMachine.CurrentState);
